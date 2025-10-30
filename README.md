@@ -10,21 +10,28 @@ git checkout nome-do-teu-branch
 **PASSO 2:**
 
 git pull origin nome-branch-comum
+
 Agora estás pronto para trabalhar à vontade
 
 **PASSO 3:** Quando acabares o trabalho
 
 salvar o trabalho no próprio PC (control+S)
+
 git add .
+
 git commit -m "mensagem explicativa do commit"
+
 git push origin nome-do-teu-branch
 
 **PASSO 4:** Atualizar o branch comum
 
 git checkout nome-branch-comum
+
 git pull origin nome-branch-comum
+
 git merge nome-do-teu-branch
-git push nome-branch-comum
+
+git push origin nome-branch-comum
 
 
 
