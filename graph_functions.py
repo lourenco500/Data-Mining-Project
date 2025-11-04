@@ -69,35 +69,3 @@ def plot_monthly_evolution(df, date_col, value_col,
     fig.tight_layout()
     
     return fig
-
-
-# def plot_bar_features(df, features,
-#                       title="Bar Plots of Categorical, Discrete and Date Features",
-#                       n_cols=3):
-#     sns.set(style="white")
-
-#     # Calculate number of rows automatically
-#     n_rows = (len(features) + n_cols - 1) // n_cols
-
-#     fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, n_rows * 3.5))
-#     axes = axes.flatten()
-
-#     for ax, feat in zip(axes, features):
-#         sns.countplot(x=df[feat],
-#                       order=df[feat].value_counts().index,
-#                       color="#66a4de",
-#                       edgecolor="black",
-#                       ax=ax)
-#         ax.set_title(feat)
-#         ax.set_xlabel('')
-#         ax.tick_params(axis='x', rotation=45)
-
-#     # Delete extra axes if features < subplot spaces
-#     for j in range(len(features), len(axes)):
-#         fig.delaxes(axes[j])
-
-#     fig.suptitle(title, fontsize=25, fontweight="bold")
-#     fig.tight_layout(rect=[0, 0, 1, 0.97])
-
-#     return fig
-
