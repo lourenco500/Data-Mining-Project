@@ -26,6 +26,9 @@ def load_data():
     continuous_CDB = ["Latitude", "Longitude", "Income", "Customer Lifetime Value"]
     non_metric_features_CDB = customerDB.columns.drop(metric_features_CDB).to_list()
 
+    # categorical_features_CDB = customerDB.select_dtypes(include= 'object', exclude='datetime').columns.tolist()
+    # discrete_features_CDB = customerDB[["EnrollmentYear", "CancellationYear"]].columns.tolist()
+
     return (
         flightsDB, customerDB, metaData,
         non_metric_features_FDB, metric_features_FDB, continuous_FDB,

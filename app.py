@@ -4,7 +4,7 @@ st.set_page_config(layout="wide")
 import pandas as pd
 import numpy as np
 from data_loader import load_data
-from graph_functions import boxplots_CDB, location_scatter_CDB
+from graph_functions import plot_monthly_evolution, location_scatter_CDB
 
 
 if st.session_state.get("__filters_cleared__", False):
@@ -285,36 +285,38 @@ elif page == "Flights Explorer":
 elif page == "Insights & Graphs":
     st.title("📊 Customer Insights Dashboard")
 
-    st.sidebar.subheader("Insights Controls (CustomerDB)")
-
-    # Numeric metric selection
-    available_metrics = [c for c in metric_features_CDB if c in customerDB.columns]
-    if not available_metrics:
-        st.warning("No numeric features found in CustomerDB for plotting.")
-    else:
-        selected = st.sidebar.multiselect(
-            "Select metric features to plot (boxplots)",
-            options=available_metrics,
-            default=available_metrics[:8]
-        )
-        if selected:
-            try:
-                fig_box = boxplots_CDB(customerDB, selected)
-                st.pyplot(fig_box)
-            except Exception as e:
-                st.error(f"Failed to build boxplots: {e}")
-
     # Location scatter
-    st.sidebar.markdown("---")
-    show_location = st.sidebar.checkbox("Show customer location scatter", value=True)
-    show_trend = st.sidebar.checkbox("Show trend line on location scatter", value=False)
+    st.markdown("---")
+    st.subheader("Customer Location Scatter")
 
-    if show_location:
-        if ("Longitude" in customerDB.columns) and ("Latitude" in customerDB.columns):
-            try:
-                fig_loc = location_scatter_CDB(customerDB, lon_col="Longitude", lat_col="Latitude", show_trend=show_trend)
-                st.pyplot(fig_loc)
-            except Exception as e:
-                st.error(f"Failed to draw location scatter: {e}")
-        else:
-            st.info("Longitude/Latitude columns not found in CustomerDB; cannot display location scatter.")
+    if ("Longitude" in customerDB.columns) and ("Latitude" in customerDB.columns):
+        try:
+            fig_loc = location_scatter_CDB(
+                customerDB,
+                lon_col="Longitude",
+                lat_col="Latitude",
+                show_trend=True  
+            )
+            st.pyplot(fig_loc)
+        except Exception as e:
+            st.error(f"Failed to draw location scatter: {e}")
+    else:
+        st.info("Longitude/Latitude columns not found in CustomerDB; cannot display location scatter.")
+
+    # Monthly evolution plot
+    fig_monthly_evo = plot_monthly_evolution(
+        df=flightsDB,
+        date_col="YearMonthDate",
+        value_col="NumFlights",
+        title="Monthly Evolution of the Average Number of Flights per Customer",
+        xlabel="Year/Month",
+        ylabel="Average number of flights per customer"
+    )
+
+    st.pyplot(fig_monthly_evo)
+
+    # Bar plots for categorical & discrete features
+    # bar_plot_features = categorical_features_CDB[3:] + discrete_features_CDB
+
+    # fig_bar = plot_bar_features(customerDB, bar_plot_features)
+    # st.pyplot(fig_bar)

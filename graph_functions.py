@@ -4,63 +4,6 @@ from math import ceil
 import numpy as np
 import pandas as pd
 
-def boxplots_CDB(df: pd.DataFrame, features: list, rows: int = 2, figsize=(20, 10)):
-    """
-    Create a matplotlib Figure containing boxplots for the given features from df.
-    - df: customer dataframe
-    - features: list of numeric feature names to plot
-    - rows: preferred number of rows (function will compute columns automatically)
-    Returns: matplotlib.figure.Figure
-    """
-    if not features:
-        raise ValueError("No features provided for boxplots.")
-
-    n = len(features)
-    cols = ceil(n / rows)
-
-    sns.set_style("white")
-    fig, axes = plt.subplots(rows, cols, figsize=figsize, constrained_layout=True)
-    fig.set_constrained_layout_pads(h_pad=.2)
-
-    # Flatten axes to iterate easily
-    if hasattr(axes, "flatten"):
-        axes_list = axes.flatten()
-    else:
-        axes_list = [axes]
-
-    # Hide extra axes if any
-    for ax in axes_list[n:]:
-        ax.set_visible(False)
-
-    for ax, feat in zip(axes_list, features):
-        if feat not in df.columns:
-            ax.set_visible(False)
-            continue
-
-        data = df[feat].dropna().reset_index(drop=True)
-        if data.empty:
-            ax.set_visible(False)
-            continue
-
-        sns.boxplot(
-            x=data,
-            ax=ax,
-            color="#0062FF",
-            boxprops=dict(edgecolor="black"),
-            whiskerprops=dict(color="black"),
-            capprops=dict(color="black"),
-            medianprops=dict(color="black", linewidth=3),
-            flierprops=dict(markeredgecolor="black")
-        )
-
-        ax.grid(True, linestyle="--", alpha=0.4)
-        ax.set_title(feat, fontsize=18)
-        ax.set_xlabel("")
-
-    plt.suptitle("Metric Variables' Box Plots", fontsize=25, fontweight="bold")
-    return fig
-
-
 def location_scatter_CDB(df: pd.DataFrame, lon_col: str = "Longitude", lat_col: str = "Latitude",
                          show_trend: bool = True, figsize=(10, 6)):
     """
@@ -100,3 +43,61 @@ def location_scatter_CDB(df: pd.DataFrame, lon_col: str = "Longitude", lat_col: 
     ax.grid(True, alpha=0.2)
     fig.tight_layout()
     return fig
+
+def plot_monthly_evolution(df, date_col, value_col,
+                           title="Monthly Trend",
+                           xlabel="Date",
+                           ylabel="Value"):
+    df = df.copy()
+    df[date_col] = pd.to_datetime(df[date_col])
+    df = df.sort_values(date_col)
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    sns.lineplot(
+        x=date_col,
+        y=value_col,
+        data=df,
+        marker="o",
+        color="steelblue",
+        ax=ax
+    )
+
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    plt.xticks(rotation=45)
+    fig.tight_layout()
+    
+    return fig
+
+
+# def plot_bar_features(df, features,
+#                       title="Bar Plots of Categorical, Discrete and Date Features",
+#                       n_cols=3):
+#     sns.set(style="white")
+
+#     # Calculate number of rows automatically
+#     n_rows = (len(features) + n_cols - 1) // n_cols
+
+#     fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, n_rows * 3.5))
+#     axes = axes.flatten()
+
+#     for ax, feat in zip(axes, features):
+#         sns.countplot(x=df[feat],
+#                       order=df[feat].value_counts().index,
+#                       color="#66a4de",
+#                       edgecolor="black",
+#                       ax=ax)
+#         ax.set_title(feat)
+#         ax.set_xlabel('')
+#         ax.tick_params(axis='x', rotation=45)
+
+#     # Delete extra axes if features < subplot spaces
+#     for j in range(len(features), len(axes)):
+#         fig.delaxes(axes[j])
+
+#     fig.suptitle(title, fontsize=25, fontweight="bold")
+#     fig.tight_layout(rect=[0, 0, 1, 0.97])
+
+#     return fig
+
