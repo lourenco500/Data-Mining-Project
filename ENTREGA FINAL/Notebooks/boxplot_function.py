@@ -4,19 +4,39 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-def create_boxplots(df, numeric_cols, n_cols=2, figsize=(12, 8)):
-    n_rows = ceil(len(numeric_cols) / n_cols)
-    fig, axes = plt.subplots(n_rows, n_cols, figsize=(figsize[0], figsize[1]*n_rows))
-    axes = np.array(axes).flatten()
-    
-    for ax, col in zip(axes, numeric_cols):
-        sns.boxplot(x=df[col], ax=ax)
-        ax.set_title(col)
+def create_boxplots(df, numeric_cols, n_cols=3, figsize=(20, 10)):
+    # Prepare figure. Create individual axes where each histogram will be placed
+    fig, axes = plt.subplots(ceil(len(numeric_cols) / n_cols), 
+                            n_cols, 
+                            figsize,
+                            constrained_layout=True) # Adjust automatically spacing between subplot and labels 
+
+    # Increase vertical space between rows
+    fig.set_constrained_layout_pads(h_pad=.2)
+
+    # Plot data
+    # Iterate across axes objects and associate each box plot:
+    for ax, feat in zip(axes.flatten(), numeric_cols): # "[2:]" to skip Year and Month features
+        sns.boxplot(x=df[feat], ax=ax,
+                    # Set inside color to blue
+                    color="#0062FF",
+                    # Set line colors to black
+                    boxprops=dict(edgecolor="black"),
+                    whiskerprops=dict(color="black"),
+                    capprops=dict(color="black"),
+                    medianprops=dict(color="black", linewidth=3),
+                    flierprops=dict(markeredgecolor="black"))
+        
+        # Put grid with low opacity and dashed line so it's visible, but not distracting
+        ax.grid(True, linestyle="--", alpha=0.4)
+
+        # Put title of each graph with bigger font
+        ax.set_title(feat, fontsize=18)
+
+        # Hide x label since we already have the boxlplot title at the top
         ax.set_xlabel("")
-    
-    # Esconde eixos extras
-    for ax in axes[len(numeric_cols):]:
-        ax.set_visible(False)
-    
-    plt.tight_layout()
-    plt.show()
+        
+    # Layout
+    # Add title and make it bigger
+    plt.suptitle("Metric features' Box Plots", 
+                fontsize = 25, fontweight="bold")
