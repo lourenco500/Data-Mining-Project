@@ -102,106 +102,42 @@ def scaling_features(df, method):
 
     if method == 'minmax':
         # Scale and transform our data using MinMaxScaler[0,1]
-        scaled_df = MinMaxScaler().fit_transform(df[metric_cols])
+        scaler = MinMaxScaler().fit(df[metric_cols])
+        scaled_df = scaler.transform(df[metric_cols])
     elif method == 'minmax2':
         # Create a MinMaxScaler instance that will range between -1 and 1 and fit to our data
-        scaled_df = MinMaxScaler(feature_range=(-1, 1)).fit_transform(df[metric_cols])
+        scaler = MinMaxScaler(feature_range=(-1, 1)).fit(df[metric_cols])
+        scaled_df = scaler.transform(df[metric_cols])
     elif method == 'standard':
         # Create a StandardScaler instance and fit to our data
-        scaled_df = StandardScaler().fit_transform(df[metric_cols])
+        scaler = StandardScaler().fit(df[metric_cols])
+        scaled_df = scaler.transform(df[metric_cols])
     else: 
         # Create a RobustScaler instance and fit to our data
-        scaled_df = RobustScaler().fit_transform(df[metric_cols])
+        scaler = RobustScaler().fit(df[metric_cols])
+        scaled_df = scaler.transform(df[metric_cols])
 
     # Replace the original metric columns with the scaled values
     df[metric_cols] = scaled_df
 
-    return df
+    return df, scaler
 
 
 
-# ------------------ HIGHLY CORRELATED FEATURES ------------------ #
+#--------------------------------------- CORRELATION PAIRS --------------------------------------#
 
-# Remove one feature from each pair of highly correlated numerical features
-def remove_correlated_features(df, method='spearman', high_threshold = 0.9, low_threshold=0.01, return_summary=False):
-    """ Removes one feature from each pair of highly correlated numerical features based on training data only.
-        Parameters:
-            df: DataFrame containing the features.
-            method: Correlation method to use (e.g., "pearson", "spearman").
-            threshold: Correlation threshold above which one feature from the pair will be removed.
-            return_summary: If True, prints a summary of the features removed.
-        Returns:
-            df: DataFrame with highly correlated features removed.
-    """
-    
+def high_corr_pairs(df, corr_type, threshold=0.9):
 
-    df = df.copy()
-    # Select only numerical columns
-    num_cols = df.select_dtypes(include='number').columns
-    
-    # Compute absolute correlation matrix
-    corr_matrix = df[num_cols].corr(method='spearman').abs()
-    
-    # Create mask for the upper triangle
-    upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
-    
-    # Identify features to drop
-    to_drop = [column for column in upper.columns if any(upper[column] > high_threshold) and any(upper[column] < low_threshold)]
+    # Select only numeric columns
+    numeric_cols = df.select_dtypes(include=[np.number]).columns
 
-    # Identify features to keep
-    cols_to_keep = [col for col in df.columns if col not in to_drop]
+    corr = df[numeric_cols].corr(method = corr_type)
+    # pegar só metade inferior para não repetir pares
+    mask = np.tril(np.ones(corr.shape), k=-1).astype(bool)
+    corr_lower = corr.where(mask)
 
-    # Apply to df_to_apply
-    df = df[cols_to_keep]
+    # converter em lista de pares e filtrar só os acima do threshold
+    high_corr = corr_lower.unstack().dropna()
+    high_corr = high_corr[high_corr.abs() >= threshold]
 
-    # Print summary if requested
-    if return_summary:
-        print(f"Total features kept: {len(num_cols) - len(to_drop)}")
-        print(f"Features selected: {cols_to_keep}")
-        print(f"Nº Features eliminated: {len(to_drop)}")
-    
-    return df
-
-
-
-# ------------------ LOW CORRELATED FEATURES ------------------ #
-
-# Remove one feature from each pair of low correlated numerical features
-def remove_low_correlated_features(df, method='spearman', threshold = 0.9, return_summary=False):
-    """ Removes one feature from each pair of highly correlated numerical features based on training data only.
-        Parameters:
-            df: DataFrame containing the features.
-            method: Correlation method to use (e.g., "pearson", "spearman").
-            threshold: Correlation threshold under which one feature from the pair will be removed.
-            return_summary: If True, prints a summary of the features removed.
-        Returns:
-            df: DataFrame with low correlated features removed.
-    """
-    
-
-    df = df.copy()
-    # Select only numerical columns
-    num_cols = df.select_dtypes(include='number').columns
-    
-    # Compute absolute correlation matrix
-    corr_matrix = df[num_cols].corr(method='spearman').abs()
-    
-    # Create mask for the upper triangle
-    upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
-    
-    # Identify features to drop
-    to_drop = [column for column in upper.columns if any(upper[column] < threshold)]
-
-    # Identify features to keep
-    cols_to_keep = [col for col in df.columns if col not in to_drop]
-
-    # Apply to df_to_apply
-    df = df[cols_to_keep]
-
-    # Print summary if requested
-    if return_summary:
-        print(f"Total features kept: {len(num_cols) - len(to_drop)}")
-        print(f"Features selected: {cols_to_keep}")
-        print(f"Nº Features eliminated: {len(to_drop)}")
-    
-    return df
+    return high_corr.sort_values(ascending=False)
