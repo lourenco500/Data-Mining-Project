@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
 import pandas as pd
-#from sklearn.cluster import AgglomerativeClustering
+from sklearn.cluster import AgglomerativeClustering
 from sklearn.base import clone
 
 
@@ -159,7 +159,7 @@ def high_corr_pairs(df, corr_type, threshold=0.9):
 
 #--------------------------------------- SUM OF SQUARES --------------------------------------#
 
-def get_ss(df, feats):
+def get_ss(df_perspective):
     """ Calculate the sum of squares (SS) for the given DataFrame.
     Parameters:
         df (pandas.DataFrame): The input DataFrame containing the data.
@@ -173,7 +173,7 @@ def get_ss(df, feats):
     return ss 
 
 
-def get_ssb(df, feats, label_col):
+def get_ssb(df label_col):
     """ Calculate the between-group sum of squares (SSB) for the given DataFrame.
     Parameters:
         df (pandas.DataFrame): The input DataFrame containing the data.
@@ -239,6 +239,9 @@ def get_rsq(df, feats, label_col):
     return (df_ssb_/df_sst_)
 
 
+
+def get_r2_scores()
+
 # Da aula
 def get_r2_hc(df, link_method, max_nclus, min_nclus=1, dist="euclidean"):
     """This function computes the R2 for a set of cluster solutions given by the application of a hierarchical method.
@@ -259,17 +262,14 @@ def get_r2_hc(df, link_method, max_nclus, min_nclus=1, dist="euclidean"):
     feats = df.columns.tolist()
     
     for i in range(min_nclus, max_nclus+1):  # iterate over desired ncluster range
-        
-        # CODE HERE ####################################
+        #create hierarchical clusterer
         cluster = AgglomerativeClustering(linkage=link_method, metric=dist, n_clusters=i)
         
         #get cluster labels
-        # CODE HERE ####################################
         hclabels = cluster.fit_predict(df[feats])
         
         # concat df with labels
         df_concat = pd.concat([df, pd.Series(hclabels, name='labels', index=df.index)], axis=1)  
-        
         
         # append the R2 of the given cluster solution
         r2.append(get_rsq(df_concat, feats, 'labels'))
