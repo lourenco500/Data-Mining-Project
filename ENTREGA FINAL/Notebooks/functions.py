@@ -159,45 +159,96 @@ def high_corr_pairs(df, corr_type, threshold=0.9):
 
 #--------------------------------------- SUM OF SQUARES --------------------------------------#
 
-def get_ss(df_perspective):
-    ss = np.sum(df_perspective.var() * (df_perspective.count() - 1))
+def get_ss(df, feats):
+    """
+    Calculate the sum of squares (SS) for the given DataFrame.
+
+    The sum of squares is computed as the sum of the variances of each column
+    multiplied by the number of non-NA/null observations minus one.
+
+    Parameters:
+    df (pandas.DataFrame): The input DataFrame for which the sum of squares is to be calculated.
+    feats (list of str): A list of feature column names to be used in the calculation.
+
+    Returns:
+    float: The sum of squares of the DataFrame.
+    """
+    df_ = df[feats]
+    ss = np.sum(df_.var() * (df_.count() - 1))
+    
     return ss 
 
 
-#PODE NAO SER PRECISO. ACHO QUE PODE SER CALCULADO USANDO O GET_SS E O GET_SSW
-# def get_ssb(df_perspective, label_col):
-#     ssb_i = 0
-#     for i in np.unique(df[label_col]):
-#         df_ = df.loc[:, feats]
-#         X_ = df_.values
-#         X_k = df_.loc[df[label_col] == i].values
-        
-#         ssb_i += (X_k.shape[0] * (np.square(X_k.mean(axis=0) - X_.mean(axis=0))) )
+def get_ssb(df, feats, label_col):
+    """
+    Calculate the between-group sum of squares (SSB) for the given DataFrame.
+    The between-group sum of squares is computed as the sum of the squared differences
+    between the mean of each group and the overall mean, weighted by the number of observations
+    in each group.
 
-#     ssb = np.sum(ssb_i)
+    Parameters:
+    df (pandas.DataFrame): The input DataFrame containing the data.
+    feats (list of str): A list of feature column names to be used in the calculation.
+    label_col (str): The name of the column in the DataFrame that contains the group labels.
+    
+    Returns
+    float: The between-group sum of squares of the DataFrame.
+    """
+    
+    ssb_i = 0
+    for i in np.unique(df[label_col]):
+        df_ = df.loc[:, feats]
+        X_ = df_.values
+        X_k = df_.loc[df[label_col] == i].values
+        
+        ssb_i += (X_k.shape[0] * (np.square(X_k.mean(axis=0) - X_.mean(axis=0))) )
+
+    ssb = np.sum(ssb_i)
     
 
-#     return ssb
+    return ssb
 
 
-def get_ssw(df_perspective, label_col):
+def get_ssw(df, feats, label_col):
+    """
+    Calculate the sum of squared within-cluster distances (SSW) for a given DataFrame.
 
-    feats = df_perspective.columns.tolist()
+    Parameters:
+    df (pandas.DataFrame): The input DataFrame containing the data.
+    feats (list of str): A list of feature column names to be used in the calculation.
+    label_col (str): The name of the column containing cluster labels.
+
+    Returns:
+    float: The sum of squared within-cluster distances (SSW).
+    """
     feats_label = feats+[label_col]
 
-    df_k = df_perspective[feats_label].groupby(by=label_col).apply(
+    df_k = df[feats_label].groupby(by=label_col).apply(
         lambda col: get_ss(col, feats), 
         include_groups=False
         )
 
     return df_k.sum()
 
+
+
 #--------------------------------------- R-SQUARED --------------------------------------#
 
-def get_rsq(df_perspective, label_col):
+def get_rsq(df, feats, label_col):
+    """
+    Calculate the R-squared value for a given DataFrame and features.
 
-    df_sst_ = get_ss(df_perspective)                 # get total sum of squares
-    df_ssw_ = get_ssw(df_perspective, label_col)     # get ss within
+    Parameters:
+    df (pd.DataFrame): The input DataFrame containing the data.
+    feats (list): A list of feature column names to be used in the calculation.
+    label_col (str): The name of the column containing the labels or cluster assignments.
+
+    Returns:
+    float: The R-squared value, representing the proportion of variance explained by the clustering.
+    """
+
+    df_sst_ = get_ss(df, feats)                 # get total sum of squares
+    df_ssw_ = get_ssw(df, feats, label_col)     # get ss within
     df_ssb_ = df_sst_ - df_ssw_                 # get ss between
 
     # r2 = ssb/sst 
@@ -205,8 +256,11 @@ def get_rsq(df_perspective, label_col):
 
 
 
-
 # Da aula
+####################################
+#### Complete the code in the function
+####################################
+
 def get_r2_hc(df, link_method, max_nclus, min_nclus=1, dist="euclidean"):
     """This function computes the R2 for a set of cluster solutions given by the application of a hierarchical method.
     The R2 is a measure of the homogenity of a cluster solution. It is based on SSt = SSw + SSb and R2 = SSb/SSt. 
@@ -226,19 +280,23 @@ def get_r2_hc(df, link_method, max_nclus, min_nclus=1, dist="euclidean"):
     feats = df.columns.tolist()
     
     for i in range(min_nclus, max_nclus+1):  # iterate over desired ncluster range
-        #create hierarchical clusterer
+        
+        # CODE HERE ####################################
         cluster = AgglomerativeClustering(linkage=link_method, metric=dist, n_clusters=i)
         
         #get cluster labels
+        # CODE HERE ####################################
         hclabels = cluster.fit_predict(df[feats])
         
         # concat df with labels
         df_concat = pd.concat([df, pd.Series(hclabels, name='labels', index=df.index)], axis=1)  
         
+        
         # append the R2 of the given cluster solution
         r2.append(get_rsq(df_concat, feats, 'labels'))
         
     return np.array(r2)
+
 
 # Da stora
 def get_r2_scores(df, feats, clusterer, min_k=2, max_k=10):
