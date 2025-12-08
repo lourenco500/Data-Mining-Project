@@ -160,56 +160,32 @@ def high_corr_pairs(df, corr_type, threshold=0.9):
 #--------------------------------------- SUM OF SQUARES --------------------------------------#
 
 def get_ss(df_perspective):
-    """ Calculate the sum of squares (SS) for the given DataFrame.
-    Parameters:
-        df (pandas.DataFrame): The input DataFrame containing the data.
-        feats (list of str): A list of feature column names to be used in the calculation.
-    Returns:
-        float: The sum of squares (SS) value.
-    """
-    df_ = df[feats]
-    ss = np.sum(df_.var() * (df_.count() - 1))
-    
+    ss = np.sum(df_perspective.var() * (df_perspective.count() - 1))
     return ss 
 
 
-def get_ssb(df label_col):
-    """ Calculate the between-group sum of squares (SSB) for the given DataFrame.
-    Parameters:
-        df (pandas.DataFrame): The input DataFrame containing the data.
-        feats (list of str): A list of feature column names to be used in the calculation.
-        label_col (str): The name of the column containing group labels.
-    Returns:
-        float: The between-group sum of squares (SSB) value.
-    """
-    
-    ssb_i = 0
-    for i in np.unique(df[label_col]):
-        df_ = df.loc[:, feats]
-        X_ = df_.values
-        X_k = df_.loc[df[label_col] == i].values
+#PODE NAO SER PRECISO. ACHO QUE PODE SER CALCULADO USANDO O GET_SS E O GET_SSW
+# def get_ssb(df_perspective, label_col):
+#     ssb_i = 0
+#     for i in np.unique(df[label_col]):
+#         df_ = df.loc[:, feats]
+#         X_ = df_.values
+#         X_k = df_.loc[df[label_col] == i].values
         
-        ssb_i += (X_k.shape[0] * (np.square(X_k.mean(axis=0) - X_.mean(axis=0))) )
+#         ssb_i += (X_k.shape[0] * (np.square(X_k.mean(axis=0) - X_.mean(axis=0))) )
 
-    ssb = np.sum(ssb_i)
+#     ssb = np.sum(ssb_i)
     
 
-    return ssb
+#     return ssb
 
 
-def get_ssw(df, feats, label_col):
-    """
-    Calculate the sum of squared within-cluster distances (SSW) for a given DataFrame.
-    Parameters:
-        df (pandas.DataFrame): The input DataFrame containing the data.
-        feats (list of str): A list of feature column names to be used in the calculation.
-        label_col (str): The name of the column containing cluster labels.
-    Returns:
-        float: The sum of squared within-cluster distances (SSW).
-    """
+def get_ssw(df_perspective, label_col):
+
+    feats = df_perspective.columns.tolist()
     feats_label = feats+[label_col]
 
-    df_k = df[feats_label].groupby(by=label_col).apply(
+    df_k = df_perspective[feats_label].groupby(by=label_col).apply(
         lambda col: get_ss(col, feats), 
         include_groups=False
         )
@@ -218,21 +194,10 @@ def get_ssw(df, feats, label_col):
 
 #--------------------------------------- R-SQUARED --------------------------------------#
 
-def get_rsq(df, feats, label_col):
-    """
-    Calculate the R-squared value for a given DataFrame and features.
+def get_rsq(df_perspective, label_col):
 
-    Parameters:
-    df (pd.DataFrame): The input DataFrame containing the data.
-    feats (list): A list of feature column names to be used in the calculation.
-    label_col (str): The name of the column containing the labels or cluster assignments.
-
-    Returns:
-    float: The R-squared value, representing the proportion of variance explained by the clustering.
-    """
-
-    df_sst_ = get_ss(df, feats)                 # get total sum of squares
-    df_ssw_ = get_ssw(df, feats, label_col)     # get ss within
+    df_sst_ = get_ss(df_perspective)                 # get total sum of squares
+    df_ssw_ = get_ssw(df_perspective, label_col)     # get ss within
     df_ssb_ = df_sst_ - df_ssw_                 # get ss between
 
     # r2 = ssb/sst 
@@ -240,7 +205,6 @@ def get_rsq(df, feats, label_col):
 
 
 
-def get_r2_scores()
 
 # Da aula
 def get_r2_hc(df, link_method, max_nclus, min_nclus=1, dist="euclidean"):
