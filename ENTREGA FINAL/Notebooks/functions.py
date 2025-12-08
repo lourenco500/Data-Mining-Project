@@ -160,19 +160,7 @@ def high_corr_pairs(df, corr_type, threshold=0.9):
 #--------------------------------------- SUM OF SQUARES --------------------------------------#
 
 def get_ss(df, feats):
-    """
-    Calculate the sum of squares (SS) for the given DataFrame.
 
-    The sum of squares is computed as the sum of the variances of each column
-    multiplied by the number of non-NA/null observations minus one.
-
-    Parameters:
-    df (pandas.DataFrame): The input DataFrame for which the sum of squares is to be calculated.
-    feats (list of str): A list of feature column names to be used in the calculation.
-
-    Returns:
-    float: The sum of squares of the DataFrame.
-    """
     df_ = df[feats]
     ss = np.sum(df_.var() * (df_.count() - 1))
     
@@ -180,20 +168,6 @@ def get_ss(df, feats):
 
 
 def get_ssb(df, feats, label_col):
-    """
-    Calculate the between-group sum of squares (SSB) for the given DataFrame.
-    The between-group sum of squares is computed as the sum of the squared differences
-    between the mean of each group and the overall mean, weighted by the number of observations
-    in each group.
-
-    Parameters:
-    df (pandas.DataFrame): The input DataFrame containing the data.
-    feats (list of str): A list of feature column names to be used in the calculation.
-    label_col (str): The name of the column in the DataFrame that contains the group labels.
-    
-    Returns
-    float: The between-group sum of squares of the DataFrame.
-    """
     
     ssb_i = 0
     for i in np.unique(df[label_col]):
@@ -210,17 +184,7 @@ def get_ssb(df, feats, label_col):
 
 
 def get_ssw(df, feats, label_col):
-    """
-    Calculate the sum of squared within-cluster distances (SSW) for a given DataFrame.
 
-    Parameters:
-    df (pandas.DataFrame): The input DataFrame containing the data.
-    feats (list of str): A list of feature column names to be used in the calculation.
-    label_col (str): The name of the column containing cluster labels.
-
-    Returns:
-    float: The sum of squared within-cluster distances (SSW).
-    """
     feats_label = feats+[label_col]
 
     df_k = df[feats_label].groupby(by=label_col).apply(
@@ -235,17 +199,6 @@ def get_ssw(df, feats, label_col):
 #--------------------------------------- R-SQUARED --------------------------------------#
 
 def get_rsq(df, feats, label_col):
-    """
-    Calculate the R-squared value for a given DataFrame and features.
-
-    Parameters:
-    df (pd.DataFrame): The input DataFrame containing the data.
-    feats (list): A list of feature column names to be used in the calculation.
-    label_col (str): The name of the column containing the labels or cluster assignments.
-
-    Returns:
-    float: The R-squared value, representing the proportion of variance explained by the clustering.
-    """
 
     df_sst_ = get_ss(df, feats)                 # get total sum of squares
     df_ssw_ = get_ssw(df, feats, label_col)     # get ss within
@@ -255,6 +208,16 @@ def get_rsq(df, feats, label_col):
     return (df_ssb_/df_sst_)
 
 
+def get_r2_scores(df, feats, method, min_nclus=1, max_nclus=10):
+
+    r2_clust = []
+    for i in range(min_nclus, max_nclus + 1):  # Ensure max_k is included
+        clust = clone(method).set_params(n_clusters=i)
+        labels = clust.fit_predict(df[feats])  # Use only the features
+        df_concat = pd.concat([df, pd.Series(labels, name='labels', index=df.index)], axis=1)
+        r2_clust.append(get_rsq(df_concat, feats, 'labels'))
+    return r2_clust
+
 
 # Da aula
 ####################################
@@ -262,30 +225,15 @@ def get_rsq(df, feats, label_col):
 ####################################
 
 def get_r2_hc(df, link_method, max_nclus, min_nclus=1, dist="euclidean"):
-    """This function computes the R2 for a set of cluster solutions given by the application of a hierarchical method.
-    The R2 is a measure of the homogenity of a cluster solution. It is based on SSt = SSw + SSb and R2 = SSb/SSt. 
-    
-    Parameters:
-    df (DataFrame): Dataset to apply clustering
-    link_method (str): either "ward", "complete", "average", "single"
-    max_nclus (int): maximum number of clusters to compare the methods
-    min_nclus (int): minimum number of clusters to compare the methods. Defaults to 1.
-    dist (str): distance to use to compute the clustering solution. Must be a valid distance. Defaults to "euclidean".
-    
-    Returns:
-    ndarray: R2 values for the range of cluster solutions
-    """
     
     r2 = []  # where we will store the R2 metrics for each cluster solution
     feats = df.columns.tolist()
     
     for i in range(min_nclus, max_nclus+1):  # iterate over desired ncluster range
         
-        # CODE HERE ####################################
         cluster = AgglomerativeClustering(linkage=link_method, metric=dist, n_clusters=i)
         
         #get cluster labels
-        # CODE HERE ####################################
         hclabels = cluster.fit_predict(df[feats])
         
         # concat df with labels
@@ -297,13 +245,3 @@ def get_r2_hc(df, link_method, max_nclus, min_nclus=1, dist="euclidean"):
         
     return np.array(r2)
 
-
-# Da stora
-def get_r2_scores(df, feats, clusterer, min_k=2, max_k=10):
-    r2_clust = {}
-    for n in range(min_k, max_k + 1):  # Ensure max_k is included
-        clust = clone(clusterer).set_params(n_clusters=n)
-        labels = clust.fit_predict(df[feats])  # Use only the features
-        df_concat = pd.concat([df, pd.Series(labels, name='labels', index=df.index)], axis=1)
-        r2_clust[n] = get_rsq(df_concat, feats, 'labels')
-    return r2_clust
