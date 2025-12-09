@@ -86,6 +86,35 @@ def create_heatmap(df, method, figsize=(10, 8)):
     plt.show()
 
 
+# --------------------------------------- OUTLIER TREATMENT --------------------------------------#
+
+def treat_outliers_cap(df, cols, threshold = 0.999):
+    """ Function to treat outliers in specified columns of a DataFrame by capping them at a given quantile threshold.
+    Parameters:
+        df (pd.DataFrame): The input DataFrame containing the data.
+        cols (list): List of column names to treat for outliers.
+        threshold (float): The quantile threshold to use for capping outliers (default is 0.999).
+    Returns:
+        pd.DataFrame: A DataFrame with outliers treated in the specified columns.
+    """
+
+    # Create a copy of the DataFrame to avoid modifying the original data
+    df = df.copy()
+
+    for col in cols:
+        # Calculate the quantile limit for the specified threshold
+        limit = df[col].quantile(threshold)
+
+        # Cap the outliers at the calculated limit
+        df = df[df[col] <= limit]
+
+    return df
+
+
+
+
+
+
 #--------------------------------------- SCALING --------------------------------------#
 
 # Function to scale features using different scaling methods
@@ -145,13 +174,13 @@ def high_corr_pairs(df, corr_type, threshold=0.9):
     numeric_cols = df.select_dtypes(include=[np.number]).columns
 
     corr = df[numeric_cols].corr(method = corr_type)
-    # pegar só metade inferior para não repetir pares
+    # Take only the lower triangle of the correlation matrix
     mask = np.tril(np.ones(corr.shape), k=-1).astype(bool)
     corr_lower = corr.where(mask)
 
-    # converter em lista de pares e filtrar só os acima do threshold
-    high_corr = corr_lower.unstack().dropna()
-    high_corr = high_corr[high_corr.abs() >= threshold]
+    # Convert the correlation matrix to a Series of pairs and filter by threshold
+    high_corr = corr_lower.unstack().dropna() # Drop correlations with NaN values
+    high_corr = high_corr[high_corr.abs() >= threshold] # Keep only pairs with correlation above the threshold
 
     return high_corr.sort_values(ascending=False)
 
