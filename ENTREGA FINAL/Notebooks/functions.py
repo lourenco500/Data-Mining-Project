@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
+from sklearn.preprocessing import OneHotEncoder
 import pandas as pd
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.base import clone
@@ -50,7 +51,7 @@ def create_boxplots(df, n_cols=3, figsize=(20, 15)):
 # ----------------- HEATMAPS ----------------- #
 
 # Function to create heatmap for correlation matrix of numeric columns
-def create_heatmap(df, method, figsize=(10, 8)):
+def create_heatmap(df, method, cols, figsize=(10, 8)):
     """
     Creates a heatmap for the correlation matrix of numeric columns.
     
@@ -62,9 +63,8 @@ def create_heatmap(df, method, figsize=(10, 8)):
         Displays a heatmap of the correlation matrix.
     """
 
-    metric_cols = df.select_dtypes(include=['number']).columns # Select numeric columns
     # Calculate correlation matrix
-    corr = df[metric_cols].corr(method=method).round(2)
+    corr = df[cols].corr(method=method).round(2)
     # Create a mask for the upper triangle
     mask = np.triu(np.ones_like(corr, dtype=bool))  
     # Visualize correlation matrix
@@ -112,9 +112,6 @@ def treat_outliers_cap(df, cols, threshold = 0.999):
 
 
 
-
-
-
 #--------------------------------------- SCALING --------------------------------------#
 
 # Function to scale features using different scaling methods
@@ -155,10 +152,53 @@ def scaling_features(df, method):
     return df, scaler
 
 
+#--------------------------------------- ONE-HOT ENCODING --------------------------------------#
+
+# Function to encode categorical features using One-Hot Encoding
+def encoding_categorical_ohe(df):
+    """ Function to encode categorical features in a DataFrame using One-Hot Encoding.
+    Parameters:
+        df (pd.DataFrame): The input DataFrame containing the data.
+    Returns:
+        pd.DataFrame: A DataFrame with categorical features encoded using One-Hot Encoding.
+        scaler (OneHotEncoder): The fitted OneHotEncoder instance.
+    """
+
+    # Create a copy of the given DataFrame
+    df_ohe = df.copy()
+
+    # Select categorical features (object and category columns)
+    categorical_features = df_ohe.select_dtypes(include=["object", "category"]).columns
+
+    # Initialize OneHotEncoder
+    ohc = OneHotEncoder(sparse_output=False)
+
+    # Apply OneHotEncoding to the categorical columns
+    ohc_feat = ohc.fit_transform(df_ohe[categorical_features])
+
+    # Get the feature names after encoding
+    ohc_feat_names = ohc.get_feature_names_out(categorical_features)
+
+    # Convert the encoded features to a DataFrame
+    ohc_features = pd.DataFrame(ohc_feat, index=df_ohe.index, columns=ohc_feat_names)
+
+    # Concatenate the new DataFrame with the original one
+    df_ohe = pd.concat([df_ohe, ohc_features], axis=1)
+
+    # Update the final DataFrame
+    df = df_ohe.copy()
+
+    # Dropping categorical Variables
+    df = df.drop(columns = categorical_features)
+
+    return df, ohc
+
+
+
 
 #--------------------------------------- CORRELATION PAIRS --------------------------------------#
 
-def high_corr_pairs(df, corr_type, threshold=0.9):
+def high_corr_pairs(df, corr_type, cols, threshold=0.9):
     """ Function to find pairs of highly correlated features in a DataFrame.
     Parameters:
         df (pd.DataFrame): The input DataFrame containing the data.
@@ -170,10 +210,7 @@ def high_corr_pairs(df, corr_type, threshold=0.9):
 
     df = df.copy()
 
-    # Select only numeric columns
-    numeric_cols = df.select_dtypes(include=[np.number]).columns
-
-    corr = df[numeric_cols].corr(method = corr_type)
+    corr = df[cols].corr(method = corr_type)
     # Take only the lower triangle of the correlation matrix
     mask = np.tril(np.ones(corr.shape), k=-1).astype(bool)
     corr_lower = corr.where(mask)
