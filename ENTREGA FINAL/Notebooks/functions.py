@@ -51,7 +51,7 @@ def create_boxplots(df, n_cols=3, figsize=(20, 15)):
 # ----------------- HEATMAPS ----------------- #
 
 # Function to create heatmap for correlation matrix of numeric columns
-def create_heatmap(df, method, cols, figsize=(10, 8)):
+def create_heatmap(df, method, figsize=(10, 8)):
     """
     Creates a heatmap for the correlation matrix of numeric columns.
     
@@ -198,7 +198,7 @@ def encoding_categorical_ohe(df):
 
 #--------------------------------------- CORRELATION PAIRS --------------------------------------#
 
-def high_corr_pairs(df, corr_type, cols, threshold=0.9):
+def high_corr_pairs(df, corr_type, threshold=0.9):
     """ Function to find pairs of highly correlated features in a DataFrame.
     Parameters:
         df (pd.DataFrame): The input DataFrame containing the data.
