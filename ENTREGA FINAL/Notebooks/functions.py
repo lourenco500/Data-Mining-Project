@@ -58,7 +58,6 @@ def create_heatmap(df, method, figsize=(10, 8)):
     Parameters:
         df (DataFrame): The dataset
         method (str): Correlation method to use (e.g., "pearson", "spearman", "kendall").
-        numeric_cols (list): List of numeric columns to include in the correlation matrix.
     Returns:
         Displays a heatmap of the correlation matrix.
     """
