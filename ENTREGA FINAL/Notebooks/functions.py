@@ -63,6 +63,9 @@ def create_heatmap(df, method, figsize=(10, 8)):
         Displays a heatmap of the correlation matrix.
     """
 
+    # Select numeric columns
+    cols = df.select_dtypes(include=['number']).columns.tolist()
+
     # Calculate correlation matrix
     corr = df[cols].corr(method=method).round(2)
     # Create a mask for the upper triangle
@@ -208,7 +211,8 @@ def high_corr_pairs(df, corr_type, threshold=0.9):
         pd.Series: A Series containing pairs of features with correlation above the specified threshold.
     """
 
-    df = df.copy()
+    # Select numeric columns
+    cols = df.select_dtypes(include=['number']).columns.tolist()
 
     corr = df[cols].corr(method = corr_type)
     # Take only the lower triangle of the correlation matrix
