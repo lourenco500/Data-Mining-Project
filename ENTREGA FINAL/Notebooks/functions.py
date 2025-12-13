@@ -268,7 +268,6 @@ def get_ssw(df, feats, label_col):
 #--------------------------------------- R-SQUARED --------------------------------------#
 
 def get_rsq(df, feats, label_col):
-
     df_sst_ = get_ss(df, feats)                 # get total sum of squares
     df_ssw_ = get_ssw(df, feats, label_col)     # get ss within
     df_ssb_ = df_sst_ - df_ssw_                 # get ss between
@@ -276,9 +275,7 @@ def get_rsq(df, feats, label_col):
     # r2 = ssb/sst 
     return (df_ssb_/df_sst_)
 
-
 def get_r2_scores(df, feats, method, min_nclus=1, max_nclus=10):
-
     r2_clust = []
     for i in range(min_nclus, max_nclus + 1):  # Ensure max_k is included
         clust = clone(method).set_params(n_clusters=i)
@@ -287,14 +284,7 @@ def get_r2_scores(df, feats, method, min_nclus=1, max_nclus=10):
         r2_clust.append(get_rsq(df_concat, feats, 'labels'))
     return r2_clust
 
-
-# Da aula
-####################################
-#### Complete the code in the function
-####################################
-
 def get_r2_hc(df, link_method, max_nclus, min_nclus=1, dist="euclidean"):
-    
     r2 = []  # where we will store the R2 metrics for each cluster solution
     feats = df.columns.tolist()
     
