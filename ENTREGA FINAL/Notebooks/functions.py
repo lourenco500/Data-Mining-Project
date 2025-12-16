@@ -35,12 +35,14 @@ def create_boxplots(df, n_cols=3, figsize=(20, 15)):
         constrained_layout=True
     )
 
+    axes = np.atleast_1d(axes)
+
     for ax, feat in zip(axes.flatten(), numeric_cols):
         sns.boxplot(x=df[feat], ax=ax, color="#0088FF", medianprops={"color": "black", "linewidth": 2})
         ax.set_title(feat)
         ax.set_xlabel("")
 
-    # esconder gráficos vazios
+    # hide unused axes
     for ax in axes.flatten()[len(numeric_cols):]:
         ax.set_visible(False)
 
