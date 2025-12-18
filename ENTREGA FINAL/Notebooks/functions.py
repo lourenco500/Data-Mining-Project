@@ -306,3 +306,81 @@ def get_r2_hc(df, link_method, max_nclus, min_nclus=1, dist="euclidean"):
         
     return np.array(r2)
 
+
+
+## SOM Visualization Helpers
+
+def get_index_matrix(nx, ny):
+    # Given nx=2, ny=3
+    # This will return a matrix whose contents are the index values:
+    # 
+    # (0,0) (0,1) (0,2)
+    # (1,0) (1,1) (1,2)
+
+    x = np.linspace(0, nx-1, nx)
+    y = np.linspace(0, ny-1, ny)
+    xv, yv = np.meshgrid(x, y, indexing='xy')
+
+
+    mx_index = np.full((nx,ny),str)
+
+    for i, j in zip(xv,yv):    
+        for ii, jj  in zip(i,j):
+            ii = int(ii)
+            jj = int(jj)
+            mx_index[ii,jj] = f"({ii},{jj})"
+
+    return mx_index
+
+
+
+# Visualize RGB SOM as colored grid
+
+def plot_rgb_matrix(som_matrix, som, ax, annot_mx=None):
+
+    som_x, som_y = som.get_weights().shape[:2]
+    
+    for i in range(som_x):
+        for j in range(som_y):
+            # Get RGB color for this unit (ensure values in 0-1 range)
+            color = np.clip(som_matrix[i, j], 0, 1)
+            
+            # Convert grid to hexagonal coordinates
+            hex_coord = som.convert_map_to_euclidean((i, j))
+            
+            center = [hex_coord[0], hex_coord[1]]
+            
+            # Draw hexagon with learned color
+            hexagon = RegularPolygon(
+                center, 
+                numVertices=6, 
+                radius=np.sqrt(1/3),
+                facecolor=color, 
+                edgecolor='white', 
+                linewidth=2
+            )
+            ax.add_patch(hexagon)
+            
+            if "None" in str((type(annot_mx))):
+                pass 
+            else:
+                
+                annot_val = annot_mx[i,j]
+                if "str" in str(type(annot_val)):
+                    pass 
+                else:
+                    if int(annot_val) == annot_val:
+                        annot_val = int(annot_val)
+                
+                ax.text(center[0], center[1], annot_val, 
+                        ha='center', va='center',
+                        fontsize='x-small')
+    
+
+    
+    ax.set_xlim(-1, som_x-.5)
+    ax.set_ylim(-1, som_y)
+    ax.set_aspect('equal')
+    ax.axis('off')
+
+    return ax
