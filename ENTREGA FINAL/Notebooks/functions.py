@@ -384,3 +384,51 @@ def plot_rgb_matrix(som_matrix, som, ax, annot_mx=None):
     ax.axis('off')
 
     return ax
+
+
+
+
+# --------------------------------------- CLUSTERING MODELS COMPARISON --------------------------------------#
+
+def compare_clustering_models(datasets_dict, feature_cols, label_col='cluster_labels_VE'):
+
+    models, r2_scores, silhouette_scores = [], [], []
+
+    for model_name, df in datasets_dict.items():
+
+        # remove noise points if present
+        if (df[label_col] == -1).any():
+            df_eval = df[df[label_col] != -1]
+        else:
+            df_eval = df
+
+        # Silhouette
+        X = df_eval[feature_cols]
+        labels = df_eval[label_col]
+
+        if labels.nunique() > 1:
+            sil = silhouette_score(X, labels)
+        else:
+            sil = np.nan
+
+        # R²
+        r2 = get_rsq(df_eval, feature_cols, label_col)
+
+        models.append(model_name)
+        r2_scores.append(r2)
+        silhouette_scores.append(sil)
+
+    # plot
+    x = np.arange(len(models))
+    width = 0.20
+
+    plt.figure(figsize=(10, 5))
+    plt.bar(x - width/2, r2_scores, width, label='R²')
+    plt.bar(x + width/2, silhouette_scores, width, label='Silhouette')
+
+    plt.xticks(x, models, rotation=45)
+    plt.ylabel('Metric Value')
+    plt.title('Clustering Models Comparison')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
