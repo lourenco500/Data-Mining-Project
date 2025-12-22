@@ -8,7 +8,7 @@ from sklearn.preprocessing import OneHotEncoder
 import pandas as pd
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.base import clone
-
+from sklearn.metrics import silhouette_score
 
 
 #--------------------------------------- BOXPLOTS --------------------------------------#
