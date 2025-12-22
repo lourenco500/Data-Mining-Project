@@ -9,6 +9,8 @@ import pandas as pd
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.base import clone
 from sklearn.metrics import silhouette_score
+from matplotlib.patches import RegularPolygon
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 #--------------------------------------- BOXPLOTS --------------------------------------#
@@ -308,6 +310,58 @@ def get_r2_hc(df, link_method, max_nclus, min_nclus=1, dist="euclidean"):
 
 
 
+#--------------------------------------- SOM HEXAGON PLOTTING --------------------------------------#
+
+# Function to plot hexagons 
+def plot_hexagons_ax(
+    som,
+    ax,
+    matrix_vals,
+    colornorm,
+    label="",
+    cmap=plt.cm.Grays,
+    annot=False
+):
+    # draw hexagons
+    for i in range(matrix_vals.shape[0]):
+        for j in range(matrix_vals.shape[1]):
+            x, y = som.convert_map_to_euclidean((i, j))
+            val = matrix_vals[i, j]
+
+            ax.add_patch(
+                RegularPolygon(
+                    (x, y),
+                    numVertices=6,
+                    radius=np.sqrt(1 / 3),
+                    facecolor=cmap(colornorm(val)),
+                    edgecolor="white",
+                    linewidth=0.5
+                )
+            )
+            # add annotation
+            if annot:
+                txt = int(val) if val == int(val) else np.round(val, 2)
+                ax.text(x, y, txt, ha="center", va="center", fontsize="x-small")
+
+    # styling
+    ax.set_aspect("equal")
+    ax.axis("off")
+    ax.set_title(label, fontsize=7.5, pad=6)
+    ax.margins(0.05)
+
+    # create colorbar axis
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="3%", pad=0.04)
+
+    # create colorbar
+    sm = plt.cm.ScalarMappable(norm=colornorm, cmap=cmap)
+    sm.set_array([])
+    cb = plt.colorbar(sm, cax=cax)
+    cb.ax.tick_params(labelsize=7)
+
+
+
+#--------------------------------------- SOM VISUALIZATION HELPERS --------------------------------------#
 ## SOM Visualization Helpers
 
 def get_index_matrix(nx, ny):
@@ -392,7 +446,7 @@ def plot_rgb_matrix(som_matrix, som, ax, annot_mx=None):
 
 def compare_clustering_models(datasets_dict, feature_cols, label_col='cluster_labels_VE'):
 
-    models, r2_scores, silhouette_scores = [], [], []
+    models, r2_scores, silhouette_scores, n_clusters_list = [], [], [], []
 
     for model_name, df in datasets_dict.items():
 
@@ -401,6 +455,10 @@ def compare_clustering_models(datasets_dict, feature_cols, label_col='cluster_la
             df_eval = df[df[label_col] != -1]
         else:
             df_eval = df
+
+        # nº of clusters (without noise)
+        n_clusters = df_eval[label_col].nunique()
+        n_clusters_list.append(n_clusters)
 
         # Silhouette
         X = df_eval[feature_cols]
@@ -426,7 +484,10 @@ def compare_clustering_models(datasets_dict, feature_cols, label_col='cluster_la
     plt.bar(x - width/2, r2_scores, width, label='R²')
     plt.bar(x + width/2, silhouette_scores, width, label='Silhouette')
 
-    plt.xticks(x, models, rotation=45)
+    # Custom x-tick labels with number of clusters
+    x_labels = [f"{m}\n(k={k})" for m, k in zip(models, n_clusters_list)]
+    plt.xticks(x, x_labels, rotation=0)
+
     plt.ylabel('Metric Value')
     plt.title('Clustering Models Comparison')
     plt.legend()
