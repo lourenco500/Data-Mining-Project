@@ -161,7 +161,7 @@ def scaling_features(df, method):
 #--------------------------------------- ONE-HOT ENCODING --------------------------------------#
 
 # Function to encode categorical features using One-Hot Encoding
-def encoding_categorical_ohe(df):
+def encoding_categorical_ohe(df, features_to_encode):
     """ Function to encode categorical features in a DataFrame using One-Hot Encoding.
     Parameters:
         df (pd.DataFrame): The input DataFrame containing the data.
@@ -171,19 +171,16 @@ def encoding_categorical_ohe(df):
     """
 
     # Create a copy of the given DataFrame
-    df_ohe = df.copy()
-
-    # Select categorical features (object and category columns)
-    categorical_features = df_ohe.select_dtypes(include=["object", "category"]).columns
+    df_ohe = df[features_to_encode].copy()
 
     # Initialize OneHotEncoder
     ohc = OneHotEncoder(sparse_output=False)
 
     # Apply OneHotEncoding to the categorical columns
-    ohc_feat = ohc.fit_transform(df_ohe[categorical_features])
+    ohc_feat = ohc.fit_transform(df_ohe)
 
     # Get the feature names after encoding
-    ohc_feat_names = ohc.get_feature_names_out(categorical_features)
+    ohc_feat_names = ohc.get_feature_names_out(features_to_encode)
 
     # Convert the encoded features to a DataFrame
     ohc_features = pd.DataFrame(ohc_feat, index=df_ohe.index, columns=ohc_feat_names)
@@ -195,7 +192,7 @@ def encoding_categorical_ohe(df):
     df = df_ohe.copy()
 
     # Dropping categorical Variables
-    df = df.drop(columns = categorical_features)
+    df = df.drop(columns = features_to_encode)
 
     return df, ohc
 
