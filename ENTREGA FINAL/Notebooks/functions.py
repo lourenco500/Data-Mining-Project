@@ -171,13 +171,13 @@ def encoding_categorical_ohe(df, features_to_encode):
     """
 
     # Create a copy of the given DataFrame
-    df_ohe = df[features_to_encode].copy()
+    df_ohe = df.copy()
 
     # Initialize OneHotEncoder
     ohc = OneHotEncoder(sparse_output=False)
 
     # Apply OneHotEncoding to the categorical columns
-    ohc_feat = ohc.fit_transform(df_ohe)
+    ohc_feat = ohc.fit_transform(df_ohe[features_to_encode])
 
     # Get the feature names after encoding
     ohc_feat_names = ohc.get_feature_names_out(features_to_encode)
@@ -194,7 +194,7 @@ def encoding_categorical_ohe(df, features_to_encode):
     # Dropping categorical Variables
     df = df.drop(columns = features_to_encode)
 
-    return df, ohc
+    return df, ohc_feat_names
 
 
 
@@ -501,37 +501,36 @@ def plot_profiling_barplots(
     groups,
     title_suffix='Merged Segment'
 ):
-    # Check if variable exists in groups
+    """
+    Plots a stacked bar chart for a categorical variable profile.
+    To be used inside subplots (does NOT create figures or legends).
+    """
     if var_name not in groups:
         raise ValueError(f"Variable '{var_name}' not found in groups.")
-    
+
     cols = groups[var_name]
-    
-    # Ensure integer cluster labels
+
     ohe_profile = ohe_profile.copy()
     ohe_profile.index = ohe_profile.index.astype(int)
 
-    # Plot stacked bar chart
-    plt.figure(figsize=(8, 5))
-    ax = ohe_profile[cols].plot(
+    ohe_profile[cols].plot(
         kind='bar',
         stacked=True,
-        figsize=(7,4),
+        ax=plt.gca(),
         color=sns.color_palette("Set2", n_colors=len(cols))
     )
-    
-    ax.set_title(f'{var_name} Distribution by {title_suffix}', fontsize=13)
-    ax.set_xlabel('Cluster')
-    ax.set_ylabel('Proportion')
-    
-    ax.legend(
-        title=var_name,
-        bbox_to_anchor=(1.15, 1),
-        loc='upper left'
+
+    plt.title(f'{var_name} Distribution by {title_suffix}', fontsize=12)
+    plt.xlabel('Cluster')
+    plt.ylabel('Proportion')
+
+    plt.legend(
+        loc='lower center',
+        bbox_to_anchor=(0.5, 0.02),
+        ncol=2,
+        fontsize=8,
+        frameon=False
     )
-    
-    plt.subplots_adjust(right=0.75)
-    plt.show()
 
 
 def plot_profiling_heatmap(
@@ -586,78 +585,42 @@ def plot_profiling_heatmap(
         plt.tight_layout()
         plt.show()
 
-
 def plot_profiling_radar(
     group_key,
     profile_df,
     groups,
+    ax,
     title_suffix='Merged Segment',
-    figsize=(7, 7),
     alpha=0.2
 ):
-    """
-    Plot one radar chart per feature group with multiple clusters overlaid.
+    if group_key not in groups:
+        raise ValueError(f"Group '{group_key}' not found in groups.")
 
-    Parameters
-    ----------
-    group_key : str or list of str
-        Key(s) in groups dict (e.g. 'City' or ['City', 'Province or State']).
-    profile_df : pd.DataFrame
-        Cluster-level dataframe (rows = clusters, columns = features).
-    groups : dict
-        Dictionary mapping group names to feature lists.
-    title_suffix : str
-        Extra title context.
-    figsize : tuple
-        Figure size per radar chart.
-    alpha : float
-        Transparency for filled areas.
-    """
+    features = groups[group_key]
 
-    # Allow single string or list
-    if isinstance(group_key, str):
-        group_key = [group_key]
-
-    # Ensure integer cluster labels
     profile_df = profile_df.copy()
     profile_df.index = profile_df.index.astype(int)
 
-    for key in group_key:
-        if key not in groups:
-            raise ValueError(f"Group '{key}' not found in groups.")
+    n_features = len(features)
+    angles = np.linspace(0, 2 * np.pi, n_features, endpoint=False)
+    angles = np.append(angles, angles[0])
 
-        features = groups[key]
+    for cluster_id in profile_df.index:
+        values = profile_df.loc[cluster_id, features].values
+        values = np.append(values, values[0])
 
-        n_features = len(features)
-        angles = np.linspace(0, 2 * np.pi, n_features, endpoint=False)
-        angles = np.append(angles, angles[0])
-
-        fig, ax = plt.subplots(figsize=figsize, subplot_kw=dict(polar=True))
-
-        for cluster_id in profile_df.index:
-            values = profile_df.loc[cluster_id, features].values
-            values = np.append(values, values[0])  # close polygon
-
-            ax.plot(
-                angles,
-                values,
-                linewidth=2,
-                label=f'Label {cluster_id}'
-            )
-            ax.fill(angles, values, alpha=alpha)
-
-        ax.set_thetagrids(
-            angles[:-1] * 180 / np.pi,
-            features
+        ax.plot(
+            angles,
+            values,
+            linewidth=2,
+            label=f'Cluster {cluster_id}'
         )
+        ax.fill(angles, values, alpha=alpha)
 
-        ax.set_title(
-            f"Radar Chart for {key} by {title_suffix}",
-            y=1.1
-        )
+    ax.set_thetagrids(
+        angles[:-1] * 180 / np.pi,
+        features
+    )
 
-        ax.grid(True)
-        ax.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1))
-
-        plt.tight_layout()
-        plt.show()
+    ax.set_title(f"{group_key}", y=1.15)
+    ax.grid(True)
