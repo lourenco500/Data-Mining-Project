@@ -48,7 +48,7 @@ def create_boxplots(df, n_cols=3, figsize=(20, 15)):
     for ax in axes.flatten()[len(numeric_cols):]:
         ax.set_visible(False)
 
-    plt.suptitle("Metric Features — Boxplots", fontsize=22, fontweight="bold")
+    plt.suptitle(f"Metric Features — Boxplots", fontsize=15, fontweight="bold")
     plt.show()
 
 
@@ -306,6 +306,40 @@ def get_r2_hc(df, link_method, max_nclus, min_nclus=1, dist="euclidean"):
     return np.array(r2)
 
 
+# --------------------------------------- R-SQUARED PER VARIABLE --------------------------------------#
+
+def get_ss_variables(df):
+    """
+    Get the Sum of Squares (SS) for each variable
+    """
+    return df.var() * (df.count() - 1)
+
+
+def r2_variables(df, labels):
+    """
+    Get the R² for each variable
+    """
+    # Total Sum of Squares
+    sst_vars = get_ss_variables(df)
+
+    # Within-cluster Sum of Squares
+    ssw_vars = (
+        df
+        .groupby(labels)
+        .apply(get_ss_variables, include_groups=False)
+        .sum(axis=0)
+    )
+
+    return 1 - ssw_vars / sst_vars
+
+
+
+
+
+
+
+
+
 
 #--------------------------------------- SOM HEXAGON PLOTTING --------------------------------------#
 
@@ -343,7 +377,7 @@ def plot_hexagons_ax(
     # styling
     ax.set_aspect("equal")
     ax.axis("off")
-    ax.set_title(label, fontsize=7.5, pad=6)
+    ax.set_title(label, fontsize = 10, fontweight="bold")
     ax.margins(0.05)
 
     # create colorbar axis
@@ -579,7 +613,7 @@ def plot_profiling_heatmap(
             linewidths=0.5
         )
 
-        plt.title(f"{key} Distribution by Cluster", fontsize=17)
+        plt.title(f"{key} Distribution by Cluster", fontsize=10, fontweight="bold")
         plt.xlabel(key)
         plt.ylabel("Cluster")
         plt.tight_layout()
