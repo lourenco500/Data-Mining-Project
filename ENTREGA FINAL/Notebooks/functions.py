@@ -475,7 +475,7 @@ def plot_rgb_matrix(som_matrix, som, ax, annot_mx=None):
 
 # --------------------------------------- CLUSTERING MODELS COMPARISON --------------------------------------#
 
-def compare_clustering_models(datasets_dict, feature_cols, label_col='cluster_labels_VE'):
+def compare_clustering_models(datasets_dict, feature_cols, label_col='cluster_labels_VE', title='Clustering Models Comparison'):
 
     models, r2_scores, silhouette_scores, n_clusters_list = [], [], [], []
 
@@ -520,7 +520,7 @@ def compare_clustering_models(datasets_dict, feature_cols, label_col='cluster_la
     plt.xticks(x, x_labels, rotation=0)
 
     plt.ylabel('Metric Value')
-    plt.title('Clustering Models Comparison')
+    plt.title(title, fontsize=14, fontweight="bold", pad=15)
     plt.legend()
     plt.tight_layout()
     plt.show()
@@ -607,6 +607,13 @@ def plot_profiling_heatmaps(
         sharey=True
     )
 
+    fig.suptitle(
+    "Categorical Profiling by Cluster - Heatmaps",
+    fontsize=16,
+    fontweight='bold',
+    y=1.02
+)
+
     if n_plots == 1:
         axes = [axes]
 
@@ -672,6 +679,12 @@ def plot_profiling_radar(
         subplot_kw=dict(polar=True)
     )
 
+    fig.suptitle(
+    "Categorical Profiling by Cluster - Radar Charts",
+    fontsize=16,
+    fontweight='bold',
+    y=1.02)
+    
     if n_plots == 1:
         axes = [axes]
 
