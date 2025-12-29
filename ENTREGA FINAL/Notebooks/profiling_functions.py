@@ -22,10 +22,6 @@ def plot_profiling_barplots(var_name, ohe_profile, groups, title_suffix='Merged 
     # Get the columns for the specified variable
     cols = groups[var_name]
 
-    # # Ensure integer cluster labels
-    # ohe_profile = ohe_profile.copy()
-    # ohe_profile.index = ohe_profile.index.astype(int)
-
     # Plot stacked barplot
     ohe_profile[cols].plot(
         kind='bar',
@@ -131,10 +127,6 @@ def plot_profiling_radar(group_keys, profile_df, groups, alpha=0.2):
     # Ensure list
     if isinstance(group_keys, str):
         group_keys = [group_keys]
-
-    # # Ensure integer cluster labels
-    # profile_df = profile_df.copy()
-    # profile_df.index = profile_df.index.astype(int)
 
     # number of plots
     n_plots = len(group_keys)
